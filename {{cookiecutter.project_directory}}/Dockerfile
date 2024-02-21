@@ -26,13 +26,13 @@ COPY --from=builder /project/__pypackages__/3.10/bin/* /bin/
 WORKDIR /app
 
 # Application src
-COPY src/ /app/src
+COPY src/ src/
 
 # Script
-COPY scripts/ /app/scripts
+COPY scripts/entrypoint.sh scripts/entrypoint.sh
 
 # Migrations
-COPY migrations/ /app/migrations
+COPY migrations/ migrations/
 
 # Pyproject
 COPY pyproject.toml .

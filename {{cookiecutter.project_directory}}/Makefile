@@ -1,4 +1,5 @@
-IMAGE_NAME=fastapi-templates:latest
+IMAGE_NAME={{cookiecutter.project_slug}}:latest
+
 
 .PHONY: build
 build:
@@ -29,17 +30,7 @@ ci-test:
 	act -j test
 
 
-
-
-define copy_file_if_not_exist
-if [ ! -f $(2) ]; then \
-  cp $(1) $(2); \
-  echo "File $(2) has been created from $(1)"; \
-else \
-  echo "File $(2) already exists, skipping copy."; \
-fi
-endef
-
 .PHONY: init
 init:
-	$(call copy_file_if_not_exist,example.env,.env)
+	@echo "Running init project"
+	bash scripts/init.sh
