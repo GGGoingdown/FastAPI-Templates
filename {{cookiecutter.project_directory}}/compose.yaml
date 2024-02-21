@@ -2,7 +2,7 @@ version: '3'
 services:
   app:
     container_name: app
-    image: fastapi-templates:latest
+    image: ${APP_IMAGE_NAME?Variable not set}:latest
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
@@ -31,7 +31,7 @@ services:
 
   migration:
     container_name: migration
-    image: fastapi-templates:latest
+    image: ${APP_IMAGE_NAME?Variable not set}:latest
     volumes:
       - ./migrations:/app/migrations
       - ./src:/app/src
