@@ -6,6 +6,7 @@
     "project_directory": "{{ cookiecutter.project_name|replace(' ', '_') }}",
     "_copy_without_render": [
         "*.html",
-        ".venv"
+        ".venv",
+        "*.yaml"
     ]
 }
