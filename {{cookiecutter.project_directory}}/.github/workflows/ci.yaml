@@ -68,5 +68,8 @@ jobs:
       env:
         REDIS_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/0"
         PG_DSN: "postgres://${{ env.PG_USERNAME }}:${{ env.PG_PASSWORD }}@${{ env.PG_HOST }}:${{ env.PG_PORT }}/${{ env.PG_DATABASE }}"
+        CELERY_BROKER_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/1"
+        CELERY_RESULT_BACKEND_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/2"
+
       run: |
         pdm run pytest -v -s -p no:warnings

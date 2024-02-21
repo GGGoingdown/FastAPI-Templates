@@ -1,9 +1,11 @@
+import ssl
 from typing import Optional, Dict, Union
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, HttpUrl, PostgresDsn, RedisDsn
+from pydantic import Field, HttpUrl, PostgresDsn, RedisDsn, AmqpDsn
 from pydantic_core import Url
 from functools import lru_cache
+from kombu import Queue
 
 from src.pkg import schema
 
@@ -44,6 +46,14 @@ class Settings(BaseSettings):
     # Redis
     redis_dsn: RedisDsn = Field(..., validation_alias="REDIS_DSN")
 
+    # Celery
+    celery_broker_dsn: Union[RedisDsn, AmqpDsn] = Field(
+        ..., validation_alias="CELERY_BROKER_DSN"
+    )
+    celery_result_backend_dsn: RedisDsn = Field(
+        ..., validation_alias="CELERY_RESULT_BACKEND_DSN"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
@@ -70,3 +80,31 @@ def get_tortoise_config(db_url: Union[str, Url]) -> Dict:
 
 
 settings = get_settings()
+
+
+# Celery Configuration
+class CeleryConfiguration:
+    broker_url = str(settings.celery_broker_dsn)
+    result_backend = str(settings.celery_result_backend_dsn)
+
+    task_serializer = "pickle"
+    result_serializer = "pickle"
+    event_serializer = "json"
+    accept_content = ["application/json", "application/x-python-serialize"]
+    result_accept_content = ["application/json", "application/x-python-serialize"]
+
+    task_queues = (Queue("hight"), Queue("low"))
+    task_default_queue = "low"
+    task_default_exchange = "ocr"
+    task_default_exchange_type = "direct"
+
+    worker_send_task_event = False
+
+    broker_connection_retry_on_startup = True
+
+    if str(settings.celery_result_backend_dsn).startswith("rediss"):
+        broker_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
+        redis_backend_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
+
+    if settings.environment == schema.EnvironmentMode.testing:
+        task_always_eager = True

@@ -2,6 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
 from loguru import logger
 
 
@@ -13,12 +14,16 @@ def init_sentry(
     release: str,
     sample_rate: float,
     fastapi_integration: bool = False,
+    celery_integration: bool = False,
     enable_tracing: bool = True,
 ) -> None:
     logger.info("Initialize sentry")
     integrations = []
     if fastapi_integration:
         integrations.append(FastApiIntegration(transaction_style="endpoint"))
+
+    if celery_integration:
+        integrations.append(CeleryIntegration())
 
     sentry_sdk.init(
         dsn=dsn,

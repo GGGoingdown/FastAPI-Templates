@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     environment:
       - ENVIRONMENT=${APP_ENVIRONMENT:-development}
-      # - SERVER=true
+      - SERVER=true
     env_file:
       - .env
     ports:
@@ -44,6 +44,24 @@ services:
     profiles:
       - migration
     command: [ "aerich", "upgrade" ]
+
+  worker:
+    container_name: worker
+    image: ${APP_IMAGE_NAME?Variable not set}:latest
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ${HOST_LOG_PATH:-./logs}:${BIND_LOG_PATH?Variable not set}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=${APP_ENVIRONMENT?Variable not set}
+      - APP_NAME=${APP_NAME}-worker
+      # - WORKER=true
+    depends_on:
+      - cache
+    command: [ "python", "./src/main.py" ]
 
   db:
     container_name: db
