@@ -38,14 +38,3 @@ else
     # 如果不存在，可能需要添加或忽略
     echo "REDIS_HOST=localhost not found in .env, no changes made."
 fi
-
-
-# 檢查文件中是否含有 APP_IMAGE_NAME={{ cookiecutter.project_slug }}
-grep -q 'APP_IMAGE_NAME={{ cookiecutter.project_slug }}' .env
-if [ $? -eq 0 ]; then
-    # 如果存在，則將 REDIS_HOST 的值改為 cache
-    sed -i 's/APP_IMAGE_NAME={{ cookiecutter.project_slug }}/APP_IMAGE_NAME=fastapi-templates/' .env
-else
-    # 如果不存在，可能需要添加或忽略
-    echo "APP_IMAGE_NAME={{ cookiecutter.project_slug }} not found in .env, no changes made."
-fi
