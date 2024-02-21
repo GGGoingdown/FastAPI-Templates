@@ -13,7 +13,7 @@ DEFAULT_TORTOISE = get_tortoise_config(str(settings.pg_dsn))
 
 class DatabaseResource(resources.AsyncResource):
     async def init(self, dsn: Url = None):
-        config = get_tortoise_config(str(dsn)) if dsn else DEFAULT_TORTOISE
+        config = get_tortoise_config(dsn) if dsn else DEFAULT_TORTOISE
         await Tortoise.init(config=config)
         logger.debug("Database initialized")
 

@@ -4,6 +4,7 @@ import aioredis
 import socket
 import secrets
 import httpx
+import asyncio
 from datetime import datetime, timedelta
 from aioredis.exceptions import ConnectionError
 from pathlib import Path
@@ -282,3 +283,32 @@ class HostAPIAgent:
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP Error: {e}")
             return False
+
+
+async def no_error_task():
+    await asyncio.sleep(1)
+    return "No Error"
+
+
+@retry(
+    retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(1),
+    before=before_log(logger=logger, log_level="INFO"),
+)
+async def retry_task_1():
+    await asyncio.sleep(1)
+    logger.info("Retry Task 1")
+    raise httpx.RequestError("Retry Health Check")
+
+
+@retry(
+    retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(1),
+    before=before_log(logger=logger, log_level="INFO"),
+)
+async def retry_task_2():
+    await asyncio.sleep(1)
+    logger.info("Retry Task 2")
+    raise httpx.RequestError("Retry Health Check")

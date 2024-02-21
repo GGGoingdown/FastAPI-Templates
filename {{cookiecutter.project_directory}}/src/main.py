@@ -3,8 +3,22 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from loguru import logger
 
-from src.config import settings
-from src.pkg import middleware
+try:
+    from src.config import settings, CeleryConfiguration
+    from src.pkg import middleware
+except ModuleNotFoundError:
+    import sys
+    from pathlib import Path
+
+    FILE = Path(__file__).resolve()
+    print(sys.path)
+    ROOT = FILE.parents[1]  # app folder
+    if str(ROOT) not in sys.path:
+        sys.path.append(str(ROOT))  # add ROOT to PATH
+
+    from src.config import settings, CeleryConfiguration  # noqa: F401
+    from src.pkg import middleware
+
 
 __TITLE__ = "{{ cookiecutter.project_name }}"
 __DESCRIPTION__ = "{{ cookiecutter.project_description }}"
@@ -13,7 +27,7 @@ __VERSION__ = "0.1.0"
 
 def add_routers(app: FastAPI) -> None:
     # Register api
-    from . import router
+    from src import router
 
     # Health check
     app.include_router(
@@ -53,6 +67,7 @@ def add_exceptions(app: FastAPI) -> None:
 def init_dependencies_inject(app: FastAPI) -> None:
     import sys
     from src.pkg import containers, dependencies
+    from src.worker import tasks
 
     container = containers.Application()
     container.config.from_dict(settings.model_dump(mode="json"))
@@ -60,6 +75,7 @@ def init_dependencies_inject(app: FastAPI) -> None:
         modules=[
             sys.modules[__name__],
             dependencies,
+            tasks,
         ]
     )
 
@@ -97,6 +113,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    from src.worker import create_celery
+
+    # Create celery
+    app.celery_app = create_celery(config=CeleryConfiguration)
+
     init_dependencies_inject(app)
 
     # Register routers
@@ -111,4 +132,36 @@ def create_app() -> FastAPI:
     return app
 
 
+def run_worker():
+    import subprocess
+
+    subprocess.call(
+        [
+            "celery",
+            "-A",
+            "src.main.celery",
+            "worker",
+            "-c",
+            "1",
+            "--loglevel=info",
+            "-E",
+            "--without-heartbeat",
+            "--without-gossip",
+            "--without-mingle",
+            "-Ofair",
+        ]
+    )
+
+
+def celery_watchgod():
+    from watchgod import run_process
+
+    run_process("./src", run_worker)
+
+
 app = create_app()
+celery = app.celery_app
+
+
+if __name__ == "__main__":
+    celery_watchgod()

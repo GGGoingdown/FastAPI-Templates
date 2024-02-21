@@ -1,5 +1,5 @@
-IMAGE_NAME={{cookiecutter.project_slug}}:latest
-
+#IMAGE_NAME={{cookiecutter.project_slug}}:latest
+IMAGE_NAME=fastapi-templates:latest
 
 .PHONY: build
 build:
@@ -8,7 +8,7 @@ build:
 
 .PHONY: up
 up:
-	docker compose up -d
+	docker compose --profile migration up -d
 
 
 .PHONY: down
