@@ -1,0 +1,11 @@
+{
+    "project_name": "Base Project",
+    "project_description": "",
+    "project_title": "{{ cookiecutter.project_name|replace(' ', '') }}",
+    "project_slug": "{{ cookiecutter.project_name|lower|replace(' ', '-') }}",
+    "project_directory": "{{ cookiecutter.project_name|replace(' ', '_') }}",
+    "_copy_without_render": [
+        "*.html",
+        ".venv"
+    ]
+}
