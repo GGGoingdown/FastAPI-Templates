@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         "{{ cookiecutter.project_slug }}", validation_alias="APP_NAME"
     )
     environment: schema.EnvironmentMode = Field(
-        schema.EnvironmentMode.development, validation_alias="APP_ENVIRONMENT"
+        schema.EnvironmentMode.development, validation_alias="ENVIRONMENT"
     )
     # Log
     log_path: str = Field("./logs", validation_alias="APP_LOG_PATH")
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file="/mnt/secret/.env", env_file_encoding="utf-8", extra="ignore"
     )
 
 

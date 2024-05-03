@@ -1,0 +1,28 @@
+# .github/actions/setup-environment/action.yml
+
+name: 'Setup Environment'
+description: 'Install packages and load environment settings'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install packages
+      run: sudo apt-get install -y libglib2.0-0
+      shell: bash
+
+    - name: Load environment file
+      uses: xom9ikk/dotenv@v2
+      with:
+        mode: test
+        load-mode: strict
+
+    - name: Setup PDM
+      uses: pdm-project/setup-pdm@v3
+      with:
+        python-version: '3.10'
+        cache: true
+
+
+    # You are now able to use PDM in your workflow
+    - name: Install dependencies
+      run: pdm install
+      shell: bash

@@ -1,22 +1,18 @@
 version: '3'
 services:
-  app:
+  app: &app
     container_name: app
     image: ${APP_IMAGE_NAME?Variable not set}:latest
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
-      - ${HOST_LOG_PATH:-./logs}:${BIND_LOG_PATH?Variable not set}
     restart: unless-stopped
     environment:
-      - ENVIRONMENT=${APP_ENVIRONMENT:-development}
-      - SERVER=true
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     env_file:
       - .env
     ports:
-      - 8888:8000
-    expose:
-      - 8888
+      - 8080:8080
     depends_on:
       - db
       - cache
@@ -25,43 +21,26 @@ services:
         "uvicorn",
         "src.main:app",
         "--host=0.0.0.0",
-        "--port=8000",
+        "--port=8080",
         "--reload"
       ]
 
+  worker:
+    <<: *app
+    container_name: worker
+    ports: []
+    command: [ "python", "./src/main.py" ]
+
   migration:
+    <<: *app
     container_name: migration
-    image: ${APP_IMAGE_NAME?Variable not set}:latest
     volumes:
       - ./migrations:/app/migrations
-      - ./src:/app/src
-    environment:
-      - ENVIRONMENT=${APP_ENVIRONMENT?Variable not set}
-    env_file:
-      - .env
-    depends_on:
-      - db
+    ports: []
+    restart: on-failure
     profiles:
       - migration
     command: [ "aerich", "upgrade" ]
-
-  worker:
-    container_name: worker
-    image: ${APP_IMAGE_NAME?Variable not set}:latest
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ${HOST_LOG_PATH:-./logs}:${BIND_LOG_PATH?Variable not set}
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - ENVIRONMENT=${APP_ENVIRONMENT?Variable not set}
-      - APP_NAME=${APP_NAME}-worker
-      # - WORKER=true
-    depends_on:
-      - cache
-    command: [ "python", "./src/main.py" ]
 
   db:
     container_name: db

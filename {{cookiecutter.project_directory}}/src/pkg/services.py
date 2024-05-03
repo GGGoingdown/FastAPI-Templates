@@ -3,8 +3,16 @@ import typing
 import aioredis
 import socket
 import secrets
-import httpx
-import asyncio
+
+# import httpx
+# import asyncio
+# from tenacity import (
+#     retry,
+#     stop_after_attempt,
+#     wait_fixed,
+#     before_log,
+#     retry_if_exception_type,
+# )
 from datetime import datetime, timedelta
 from aioredis.exceptions import ConnectionError
 from pathlib import Path
@@ -16,15 +24,8 @@ from fastapi.security import HTTPBasicCredentials, SecurityScopes
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import ValidationError
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_fixed,
-    before_log,
-    retry_if_exception_type,
-)
 
-from src.pkg import schema, repositories, utils
+from src.pkg import schema, utils
 
 
 class LoggerInit(resources.Resource):
@@ -236,16 +237,8 @@ class BaseCacheService:
 
 
 class DBService(BaseDatabaseService):
-    def __init__(self, user_repo: repositories.UserRepository):
-        self._user_repo = user_repo
+    def __init__(self):
         super().__init__()
-
-    async def create_user(
-        self, user: schema.UserCreate, *, password_hash: str
-    ) -> schema.UserInDB:
-        return await self._user_repo.create(
-            **user.model_dump(exclude={"password"}), password_hash=password_hash
-        )
 
 
 class CacheService(BaseCacheService):
@@ -253,62 +246,33 @@ class CacheService(BaseCacheService):
         super().__init__(client)
 
 
-### HTTP Agent
-class HostAPIResource(resources.AsyncResource):
-    async def init(self, base_url: str) -> httpx.AsyncClient:
-        _base_url = base_url.rstrip("/")
-        logger.debug(f"[HostAPI]::Base URL: {base_url}")
-        client = httpx.AsyncClient(base_url=_base_url)
-        return client
+### HTTP Agent Example ###
+# class HostAPIResource(resources.AsyncResource):
+#     async def init(self, base_url: str) -> httpx.AsyncClient:
+#         _base_url = base_url.rstrip("/")
+#         logger.debug(f"[HostAPI]::Base URL: {base_url}")
+#         client = httpx.AsyncClient(base_url=_base_url)
+#         return client
 
-    async def shutdown(self, client: httpx.AsyncClient) -> None:
-        await client.aclose()
-
-
-class HostAPIAgent:
-    def __init__(self, client: httpx.AsyncClient):
-        self._client = client
-
-    @retry(
-        retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
-        stop=stop_after_attempt(3),
-        wait=wait_fixed(1),
-        before=before_log(logger=logger, log_level="INFO"),
-    )
-    async def health_check(self) -> bool:
-        try:
-            response = await self._client.get("/health")
-            response.raise_for_status()
-            return True
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP Error: {e}")
-            return False
+#     async def shutdown(self, client: httpx.AsyncClient) -> None:
+#         await client.aclose()
 
 
-async def no_error_task():
-    await asyncio.sleep(1)
-    return "No Error"
+# class HostAPIAgent:
+#     def __init__(self, client: httpx.AsyncClient):
+#         self._client = client
 
-
-@retry(
-    retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
-    stop=stop_after_attempt(3),
-    wait=wait_fixed(1),
-    before=before_log(logger=logger, log_level="INFO"),
-)
-async def retry_task_1():
-    await asyncio.sleep(1)
-    logger.info("Retry Task 1")
-    raise httpx.RequestError("Retry Health Check")
-
-
-@retry(
-    retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
-    stop=stop_after_attempt(3),
-    wait=wait_fixed(1),
-    before=before_log(logger=logger, log_level="INFO"),
-)
-async def retry_task_2():
-    await asyncio.sleep(1)
-    logger.info("Retry Task 2")
-    raise httpx.RequestError("Retry Health Check")
+#     @retry(
+#         retry=retry_if_exception_type(exception_types=(httpx.RequestError,)),
+#         stop=stop_after_attempt(3),
+#         wait=wait_fixed(1),
+#         before=before_log(logger=logger, log_level="INFO"),
+#     )
+#     async def health_check(self) -> bool:
+#         try:
+#             response = await self._client.get("/health")
+#             response.raise_for_status()
+#             return True
+#         except httpx.HTTPStatusError as e:
+#             logger.error(f"HTTP Error: {e}")
+#             return False
