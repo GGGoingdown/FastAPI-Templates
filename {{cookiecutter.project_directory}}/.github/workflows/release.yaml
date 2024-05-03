@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    branches: [master]
+    types:
+      - completed
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release
+      cancel-in-progress: true
+    permissions:
+      id-token: write
+      contents: write
+
+    outputs:
+      released: ${{ steps.semantic.outputs.released }}
+      version: ${{ steps.semantic.outputs.version }}
+      tag: ${{ steps.semantic.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python Semantic Release
+        id: semantic
+        uses: python-semantic-release/python-semantic-release@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN  }}
+
+      - name: Check release
+        if: steps.semantic.outputs.released == 'true'
+        run: |
+          echo "Release was successful. Version: ${{ steps.semantic.outputs.version }}, Tag: ${{ steps.semantic.outputs.tag }}"
+
+  documentation-and-upload:
+          needs: release
+          if: needs.release.outputs.released == 'true'
+          runs-on: ubuntu-latest
+          steps:
+          - name: "Checkout"
+            uses: "actions/checkout@v4"
+
+          - name: Setup Environment
+            uses: ./.github/actions/setup-environment
+            with:
+              mode: test
+
+          - name: Build documentation
+            env:
+              REDIS_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/0"
+              PG_DSN: "postgres://${{ env.PG_USERNAME }}:${{ env.PG_PASSWORD }}@${{ env.PG_HOST }}:${{ env.PG_PORT }}/${{ env.PG_DATABASE }}"
+
+            run: |
+              pdm run mkdocs --version ${{ needs.release.outputs.tag }}

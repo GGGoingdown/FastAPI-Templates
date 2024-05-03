@@ -53,3 +53,11 @@ class JWTUser(BaseModel):
             ]
         },
     )
+
+
+class APIResponse(BaseModel):
+    detail: str = Field(description="Response message")
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"detail": "This is a message"}}
+    )

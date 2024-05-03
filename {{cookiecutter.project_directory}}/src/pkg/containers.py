@@ -1,7 +1,7 @@
 from dependency_injector import containers, providers
 
 from src.config import Settings
-from src.pkg import services, repositories, db
+from src.pkg import services, db
 
 
 class Gateway(containers.DeclarativeContainer):
@@ -39,13 +39,8 @@ class Service(containers.DeclarativeContainer):
         admin_password=config.admin_password,
     )
 
-    # Repositories
-    user_repository = providers.Singleton(repositories.UserRepository)
-
     # Services
-    database_service = providers.Singleton(
-        services.DBService, user_repo=user_repository
-    )
+    database_service = providers.Singleton(services.DBService)
     cache_service = providers.Singleton(
         services.CacheService, client=gateway.cache_resource
     )

@@ -2,8 +2,7 @@ import typing
 from tortoise.models import Model
 from tortoise.queryset import QuerySet
 
-from src.pkg import models as db_models, schema
-
+# from src.pkg import models as db_models
 
 ModelType = typing.TypeVar("ModelType", bound=Model)
 
@@ -69,12 +68,3 @@ class CRUDBase(typing.Generic[ModelType]):
             .select_for_update()
             .update(**update_schema)
         )
-
-
-class UserRepository(CRUDBase):
-    def __init__(self):
-        super().__init__(db_models.User)
-
-    async def create(self, password_hash: str, **fields: typing.Any) -> schema.UserInDB:
-        model = await super()._create(**fields, password_hash=password_hash)
-        return schema.UserInDB.model_validate(model)

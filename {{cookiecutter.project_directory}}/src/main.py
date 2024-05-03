@@ -6,6 +6,7 @@ from loguru import logger
 try:
     from src.config import settings, CeleryConfiguration
     from src.pkg import middleware
+    from src import __VERSION__
 except ModuleNotFoundError:
     import sys
     from pathlib import Path
@@ -18,11 +19,11 @@ except ModuleNotFoundError:
 
     from src.config import settings, CeleryConfiguration  # noqa: F401
     from src.pkg import middleware
+    from src import __VERSION__
 
 
 __TITLE__ = "{{ cookiecutter.project_name }}"
 __DESCRIPTION__ = "{{ cookiecutter.project_description }}"
-__VERSION__ = "0.1.0"
 
 
 def add_routers(app: FastAPI) -> None:
@@ -105,11 +106,11 @@ async def lifespan(app: FastAPI):
 
 
 # Create main app
-def create_app() -> FastAPI:
+def create_app(version: str = None) -> FastAPI:
     app = FastAPI(
         title=__TITLE__,
         description=__DESCRIPTION__,
-        version=__VERSION__,
+        version=version if version else __VERSION__,
         lifespan=lifespan,
     )
 

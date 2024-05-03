@@ -14,6 +14,7 @@
 - **Continuous Integration (CI) Support**: Implements Continuous Integration practices with built-in support for popular CI tools and platforms.
 - **GitHub Actions Support**: Leverages GitHub Actions for automation of workflows, including but not limited to, CI/CD, testing, and deployment processes. Utilizes [ACT](https://github.com/nektos/act) for running actions locally, facilitating development and testing of workflows.
 
+
 ## Getting Started
 
 Generate project:

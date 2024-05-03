@@ -1,0 +1,72 @@
+name: Test
+
+on:
+  push:
+      branches:
+      - master
+      - develop
+      - feat/*
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+            - 5432:5432
+
+      cache:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Opens tcp port 6379 on the host and service container
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          mode: test
+
+      - name: Run Unit Tests
+        env:
+          REDIS_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/0"
+          PG_DSN: "postgres://${{ env.PG_USERNAME }}:${{ env.PG_PASSWORD }}@${{ env.PG_HOST }}:${{ env.PG_PORT }}/${{ env.PG_DATABASE }}"
+          CELERY_BROKER_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/1"
+          CELERY_RESULT_BACKEND_DSN: "redis://${{ env.REDIS_HOST }}:${{ env.REDIS_PORT }}/2"
+
+        run: |
+          pdm run pytest -v -s -p no:warnings
+
+      - name: Send Telegram Message
+        uses: cbrgm/telegram-github-action@v1
+        if: always()
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+              Repository: ${{ github.repository }}
+              Branch: ${{ github.ref }}
+              Message: ${{ job.status == 'success' && 'Test succeeded. Good job.' || 'Test failed. Fix me please.' }}

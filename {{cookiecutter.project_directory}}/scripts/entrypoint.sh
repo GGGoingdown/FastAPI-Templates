@@ -6,7 +6,7 @@ set -e
 python ./src/pre_start.py
 
 # Set default value for environment variable
-: "${APP_ENVIRONMENT:=development}"
+: "${ENVIRONMENT:=development}"
 : "${SERVER:=false}"
 : "${SERVER_WORKER:=1}"
 : "${PORT:=8888}"
@@ -15,7 +15,7 @@ python ./src/pre_start.py
 
 # Metadata
 echo "###########################################################"
-echo "ENVIRONMENT: ${APP_ENVIRONMENT}"
+echo "ENVIRONMENT: ${ENVIRONMENT}"
 # Start server if SERVER environment variable is set
 echo "SERVER: ${SERVER}"
 if [ "${SERVER}" = "true" ]; then
